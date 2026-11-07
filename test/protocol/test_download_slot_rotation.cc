@@ -309,6 +309,40 @@ test_download_slot_rotation::test_cycle_equal_waits_start_at_a_random_place() {
 }
 
 void
+test_download_slot_rotation::test_cycle_equal_waits_are_not_neighbours() {
+  m_main_thread->test_set_cached_time(10000s);
+
+  // 16 equal waits, two picks: neighbours in the queue about 2 times in 16, as two draws from the whole queue give.
+  uint32_t neighbours = 0;
+
+  for (unsigned int seed = 1; seed <= 512; seed++) {
+    ::srandom(seed);
+
+    rig t(9);  // rotate_count(9) == 2
+
+    for (uint32_t i = 0; i < 9; i++)
+      t.holder(64 * 1024 * (i + 1), 120s);
+
+    std::vector<torrent::PeerConnectionBase*> waiting;
+
+    for (uint32_t i = 0; i < 16; i++)
+      waiting.push_back(t.waiting(0s));
+
+    t.queue.cycle(~uint32_t());
+
+    CPPUNIT_ASSERT(t.unchoked.size() == 2);
+
+    auto a = std::distance(waiting.begin(), std::find(waiting.begin(), waiting.end(), t.unchoked[0]));
+    auto b = std::distance(waiting.begin(), std::find(waiting.begin(), waiting.end(), t.unchoked[1]));
+
+    CPPUNIT_ASSERT(a < 16 && b < 16 && a != b);
+    neighbours += (a - b == 1 || b - a == 1 || a - b == 15 || b - a == 15);
+  }
+
+  CPPUNIT_ASSERT(neighbours < 512 / 4);
+}
+
+void
 test_download_slot_rotation::test_cycle_all_holders_in_grace() {
   m_main_thread->test_set_cached_time(10000s);
 

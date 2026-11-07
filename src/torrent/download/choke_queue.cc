@@ -277,20 +277,20 @@ choke_queue::rotate_entry(group_entry* entry) {
     return 0;
 
   // The count peers that have waited longest, oldest first: never slotted, then out longest, the slots just taken back
-  // last. The list starts with the peers at a random place in the queue, as the optimistic unchokes pick, and the rest
-  // replace its newest only if older, so among equal waits a peer that came late is not tried last.
+  // last. Each peer gets a random weight for this pick, and equal waits go by it: a tie with the list's newest replaces
+  // it at reservoir sampling's odds, so peers of equal wait are picked across the whole queue.
   auto older = [](const auto& a, const auto& b) {
-    return a.connection->down_choke()->time_last_choke() < b.connection->down_choke()->time_last_choke();
-  };
+    auto a_time = a.connection->down_choke()->time_last_choke();
+    auto b_time = b.connection->down_choke()->time_last_choke();
 
-  auto&          queued = *entry->queued();
-  size_t         start  = ::random() % queued.size();
+    return a_time < b_time || (a_time == b_time && a.weight < b.weight);
+  };
 
   container_type oldest;
   oldest.reserve(count);
 
-  for (size_t i = 0; i < queued.size(); i++) {
-    auto& peer = queued[(start + i) % queued.size()];
+  for (const auto& queued : *entry->queued()) {
+    value_type peer(queued.connection, ::random());
 
     if (oldest.size() == count) {
       if (!older(peer, oldest.back()))
