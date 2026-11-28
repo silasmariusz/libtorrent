@@ -33,11 +33,6 @@ struct idle_clock {
     return down.idle_time();
   }
 
-  bool check(std::chrono::seconds now, std::chrono::seconds limit) {
-    look(now);
-    return down.is_idle_for(limit);
-  }
-
   // The first pass, with the state as set.
   void start(std::chrono::seconds now) { look(now); }
 
@@ -210,12 +205,11 @@ test_idle_peers::test_clock_skips_interval_before_wait() {
   idle_clock     c;
   c.state(false, false, false);
   c.start(1000s);
-  CPPUNIT_ASSERT(!c.check(1120s, stalled));
+  CPPUNIT_ASSERT(c.look(1120s) == 0s);
 
   c.state(true, false, false); // it got a piece we want just before the look
-  CPPUNIT_ASSERT(!c.check(1240s, stalled));
-  CPPUNIT_ASSERT(c.down.idle_time() == 0s);
-  CPPUNIT_ASSERT(c.check(1360s, stalled));
+  CPPUNIT_ASSERT(c.look(1240s) == 0s);
+  CPPUNIT_ASSERT(c.look(1360s) >= stalled);
 }
 
 void
@@ -224,20 +218,9 @@ test_idle_peers::test_closes_itself_at_limit() {
   c.state(true, false, false);
   c.start(1000s);
 
-  CPPUNIT_ASSERT(!c.check(1120s, timeout));
-  CPPUNIT_ASSERT(!c.check(1240s, timeout));
-  CPPUNIT_ASSERT(c.check(1360s, timeout));
-}
-
-void
-test_idle_peers::test_zero_limit_closes_nothing() {
-  idle_clock c;
-  c.state(true, false, false);
-  c.start(1000s);
-
-  CPPUNIT_ASSERT(!c.check(5000s, 0s));
-  CPPUNIT_ASSERT(c.down.idle_time() == 4000s); // the clock still runs, so a later limit sees the real idle time
-  CPPUNIT_ASSERT(c.check(5120s, timeout));
+  CPPUNIT_ASSERT(c.look(1120s) < timeout);
+  CPPUNIT_ASSERT(c.look(1240s) < timeout);
+  CPPUNIT_ASSERT(c.look(1360s) >= timeout);
 }
 
 void

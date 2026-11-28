@@ -99,9 +99,6 @@ struct StateDown : StateBase {
   void                 update_idle_time(const StateUp& up, uint64_t down_total, uint64_t up_total, std::chrono::seconds now);
   std::chrono::seconds idle_time() const;
 
-  // A zero limit is never reached (DownloadInfo::peer_idle_timeout).
-  bool                is_idle_for(std::chrono::seconds limit) const;
-
   bool                has_pending_request() const;
   void                schedule_request();
   void                clear_pending_request();
@@ -167,7 +164,6 @@ inline void StateDown::clear_pending_request()            { m_request_pending = 
 inline void StateDown::set_pending_request(bool pending)  { m_request_pending = pending; }
 
 inline std::chrono::seconds StateDown::idle_time() const  { return m_idle_time; }
-inline bool StateDown::is_idle_for(std::chrono::seconds limit) const { return limit != std::chrono::seconds{} && m_idle_time >= limit; }
 
 // Restore withheld interest unless the download is complete.
 inline bool StateDown::restore_interest(bool download_done) {
