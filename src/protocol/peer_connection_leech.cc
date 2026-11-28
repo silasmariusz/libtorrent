@@ -87,8 +87,7 @@ PeerConnection<type>::receive_keepalive() {
     return ConnectionList::disconnect_available;
 
   if (type == Download::CONNECTION_LEECH) {
-    m_down.update_idle_time(m_up, m_peer_chunks.download_throttle()->rate()->total(),
-                            m_peer_chunks.upload_throttle()->rate()->total(), this_thread::cached_seconds());
+    m_down.update_idle_time(m_up, m_peer_chunks.download_throttle()->rate()->total(), m_peer_chunks.upload_throttle()->rate()->total());
 
     auto timeout = m_download->info()->peer_idle_timeout();
 

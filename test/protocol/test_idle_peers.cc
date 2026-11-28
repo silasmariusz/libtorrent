@@ -22,14 +22,22 @@ namespace {
 
 // One connection's idle clock, on its own state: what a test sets is what the keepalive pass reads.
 struct idle_clock {
+  explicit idle_clock(TestMainThread* t) : thread(t) {}
+
+  TestMainThread*              thread;
+  std::chrono::seconds         now{};
   torrent::protocol::StateUp   up;
   torrent::protocol::StateDown down;
   uint64_t                     down_total{};
   uint64_t                     up_total{};
 
-  // A keepalive pass at `now`.
-  std::chrono::seconds look(std::chrono::seconds now) {
-    down.update_idle_time(up, down_total, up_total, now);
+  // A keepalive pass at `at`, moving the main thread's clock on from the last pass.
+  std::chrono::seconds look(std::chrono::seconds at) {
+    if (now != std::chrono::seconds{})
+      thread->test_add_cached_time(at - now);
+
+    now = at;
+    down.update_idle_time(up, down_total, up_total);
     return down.idle_time();
   }
 
@@ -85,7 +93,7 @@ constexpr auto timeout = torrent::DownloadMain::idle_peer_timeout;
 
 void
 test_idle_peers::test_clock_counts_while_choked() {
-  idle_clock c;
+  idle_clock c(m_main_thread.get());
   c.state(true, false, false);
   c.start(1000s);
 
@@ -97,7 +105,7 @@ test_idle_peers::test_clock_counts_while_choked() {
 
 void
 test_idle_peers::test_clock_counts_unchoked_silent() {
-  idle_clock c;
+  idle_clock c(m_main_thread.get());
   c.state(true, true, true); // it unchoked us and we ask it: it answers nothing
   c.start(1000s);
 
@@ -107,7 +115,7 @@ test_idle_peers::test_clock_counts_unchoked_silent() {
 
 void
 test_idle_peers::test_clock_reset_by_piece_data() {
-  idle_clock c;
+  idle_clock c(m_main_thread.get());
   c.state(true, false, false);
   c.start(1000s);
 
@@ -121,7 +129,7 @@ test_idle_peers::test_clock_reset_by_piece_data() {
 
 void
 test_idle_peers::test_clock_reset_by_upload() {
-  idle_clock c;
+  idle_clock c(m_main_thread.get());
   c.state(true, false, false);
   c.start(1000s);
 
@@ -134,7 +142,7 @@ test_idle_peers::test_clock_reset_by_upload() {
 
 void
 test_idle_peers::test_clock_reset_by_unchoke() {
-  idle_clock c;
+  idle_clock c(m_main_thread.get());
   c.state(true, false, false);
   c.start(1000s);
 
@@ -148,7 +156,7 @@ test_idle_peers::test_clock_reset_by_unchoke() {
 
 void
 test_idle_peers::test_clock_reset_when_not_interested() {
-  idle_clock c;
+  idle_clock c(m_main_thread.get());
   c.state(true, false, false);
   c.start(1000s);
 
@@ -162,7 +170,7 @@ test_idle_peers::test_clock_reset_when_not_interested() {
 
 void
 test_idle_peers::test_clock_paused_while_our_slots_are_full() {
-  idle_clock c;
+  idle_clock c(m_main_thread.get());
   c.state(true, false, false);
   c.start(1000s);
 
@@ -181,7 +189,7 @@ test_idle_peers::test_clock_paused_while_our_slots_are_full() {
 
 void
 test_idle_peers::test_clock_paused_while_it_wants_our_pieces() {
-  idle_clock c;
+  idle_clock c(m_main_thread.get());
   c.state(true, false, false);
   c.start(1000s);
 
@@ -202,7 +210,7 @@ void
 test_idle_peers::test_clock_skips_interval_before_wait() {
   constexpr auto stalled = torrent::DownloadMain::idle_peer_timeout_stalled;
 
-  idle_clock     c;
+  idle_clock     c(m_main_thread.get());
   c.state(false, false, false);
   c.start(1000s);
   CPPUNIT_ASSERT(c.look(1120s) == 0s);
@@ -214,7 +222,7 @@ test_idle_peers::test_clock_skips_interval_before_wait() {
 
 void
 test_idle_peers::test_closes_itself_at_limit() {
-  idle_clock c;
+  idle_clock c(m_main_thread.get());
   c.state(true, false, false);
   c.start(1000s);
 
