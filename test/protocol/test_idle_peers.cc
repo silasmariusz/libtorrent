@@ -22,7 +22,8 @@ namespace {
 
 // One connection's idle clock, on its own state: what a test sets is what the keepalive pass reads.
 struct idle_clock {
-  explicit idle_clock(TestMainThread* t) : thread(t) {}
+  explicit idle_clock(TestMainThread* t) :
+      thread(t) {}
 
   TestMainThread*              thread;
   std::chrono::seconds         now{};
