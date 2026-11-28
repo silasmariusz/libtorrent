@@ -276,11 +276,14 @@ DownloadWrapper::receive_tick(uint32_t ticks) {
       }
     }
 
-    for (auto itr = m_main->connection_list()->begin(); itr != m_main->connection_list()->end();)
-      if (int flags = (*itr)->m_ptr()->receive_keepalive())
+    for (auto itr = m_main->connection_list()->begin(); itr != m_main->connection_list()->end();) {
+      int flags = (*itr)->m_ptr()->receive_keepalive();
+
+      if (flags != 0)
         itr = m_main->connection_list()->erase(itr, flags);
       else
         itr++;
+    }
   }
 
   auto have_queue = m_main->have_queue();
