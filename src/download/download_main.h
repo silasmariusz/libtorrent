@@ -117,8 +117,6 @@ public:
   // Called by stop(), and when the download finishes.
   void                stop_stall_watch();
 
-  static std::chrono::seconds idle_peer_limit_for(bool stalled, uint32_t connections, uint32_t min_connections);
-
   void                receive_chunk_done(unsigned int index);
   void                receive_corrupt_chunk(PeerInfo* peerInfo);
 

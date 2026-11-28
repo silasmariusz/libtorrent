@@ -330,10 +330,18 @@ DownloadMain::update_idle_peers() {
   if (m_stall_watch == nullptr)
     return;
 
+  auto idle_timeout = [this](bool stalled) {
+    // Below min the download dials by itself, and a small swarm keeps every peer.
+    if (connection_list()->size() < connection_list()->min_size())
+      return std::chrono::seconds{};
+
+    return stalled ? idle_peer_timeout_stalled : idle_peer_timeout;
+  };
+
   bool stalled = m_stall_watch->update(info()->down_rate()->total());
 
   info()->change_flags(DownloadInfo::flag_stalled, stalled);
-  info()->set_peer_idle_timeout(idle_peer_limit_for(stalled, connection_list()->size(), connection_list()->min_size()));
+  info()->set_peer_idle_timeout(idle_timeout(stalled));
 }
 
 void
@@ -341,15 +349,6 @@ DownloadMain::stop_stall_watch() {
   info()->unset_flags(DownloadInfo::flag_stalled);
   info()->set_peer_idle_timeout(std::chrono::seconds{});
   m_stall_watch.reset();
-}
-
-std::chrono::seconds
-DownloadMain::idle_peer_limit_for(bool stalled, uint32_t connections, uint32_t min_connections) {
-  // Below min the download dials by itself, and a small swarm keeps every peer.
-  if (connections < min_connections)
-    return std::chrono::seconds{};
-
-  return stalled ? idle_peer_timeout_stalled : idle_peer_timeout;
 }
 
 void

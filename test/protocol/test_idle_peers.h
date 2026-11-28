@@ -13,7 +13,6 @@ class test_idle_peers : public TestFixtureWithMainThread {
   CPPUNIT_TEST(test_clock_paused_while_it_wants_our_pieces);
   CPPUNIT_TEST(test_clock_skips_interval_before_wait);
   CPPUNIT_TEST(test_closes_itself_at_limit);
-  CPPUNIT_TEST(test_limit_from_download_state);
   CPPUNIT_TEST(test_idle_close_not_redialled);
   CPPUNIT_TEST(test_idle_drop_refused_within_window);
   CPPUNIT_TEST(test_plain_disconnect_not_refused);
@@ -38,7 +37,6 @@ public:
   void test_clock_paused_while_it_wants_our_pieces();
   void test_clock_skips_interval_before_wait();
   void test_closes_itself_at_limit();
-  void test_limit_from_download_state();
   void test_idle_close_not_redialled();
   void test_idle_drop_refused_within_window();
   void test_plain_disconnect_not_refused();

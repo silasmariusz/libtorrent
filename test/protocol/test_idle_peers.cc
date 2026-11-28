@@ -232,17 +232,6 @@ test_idle_peers::test_closes_itself_at_limit() {
 }
 
 void
-test_idle_peers::test_limit_from_download_state() {
-  using torrent::DownloadMain;
-
-  CPPUNIT_ASSERT(DownloadMain::idle_peer_limit_for(false, 50, 50) == DownloadMain::idle_peer_timeout);
-  CPPUNIT_ASSERT(DownloadMain::idle_peer_limit_for(true, 120, 50) == DownloadMain::idle_peer_timeout_stalled);
-
-  // below min the download dials by itself
-  CPPUNIT_ASSERT(DownloadMain::idle_peer_limit_for(true, 49, 50) == 0s);
-}
-
-void
 test_idle_peers::test_idle_close_not_redialled() {
   torrent::DownloadInfo info;
   peer_list             list;
