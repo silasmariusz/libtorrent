@@ -188,7 +188,7 @@ DownloadMain::stop() {
 
   info()->unset_flags(DownloadInfo::flag_stalled);
   m_stall_watch.reset();
-  info()->set_idle_peer_limit(std::chrono::seconds{});
+  info()->set_peer_idle_timeout(std::chrono::seconds{});
 
   m_initial_seeding.reset();
 
@@ -336,7 +336,7 @@ DownloadMain::update_idle_peers() {
   bool stalled = downloading && m_stall_watch->update(info()->down_rate()->total());
 
   info()->change_flags(DownloadInfo::flag_stalled, stalled);
-  info()->set_idle_peer_limit(idle_peer_limit_for(downloading, stalled, connection_list()->size(), connection_list()->min_size()));
+  info()->set_peer_idle_timeout(idle_peer_limit_for(downloading, stalled, connection_list()->size(), connection_list()->min_size()));
 }
 
 std::chrono::seconds

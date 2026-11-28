@@ -111,7 +111,7 @@ public:
   static constexpr std::chrono::seconds idle_peer_timeout         = 5min;
   static constexpr std::chrono::seconds idle_peer_timeout_stalled = 90s;
 
-  // Called every tick, before the keepalive pass: sets DownloadInfo::flag_stalled and DownloadInfo::idle_peer_limit().
+  // Called every tick, before the keepalive pass: sets DownloadInfo::flag_stalled and DownloadInfo::peer_idle_timeout().
   void                update_idle_peers();
 
   static std::chrono::seconds idle_peer_limit_for(bool downloading, bool stalled, uint32_t connections,

@@ -99,7 +99,7 @@ struct StateDown : StateBase {
   void                 update_idle_time(const StateUp& up, uint64_t down_total, uint64_t up_total, std::chrono::seconds now);
   std::chrono::seconds idle_time() const;
 
-  // A zero limit is never reached (DownloadInfo::idle_peer_limit).
+  // A zero limit is never reached (DownloadInfo::peer_idle_timeout).
   bool                is_idle_for(std::chrono::seconds limit) const;
 
   bool                has_pending_request() const;

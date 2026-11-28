@@ -50,8 +50,8 @@ public:
   static constexpr int disconnect_set_time     = (1 << 3);
   static constexpr int disconnect_idle         = (1 << 4);
 
-  // A peer whose connection closed as idle (DownloadInfo::idle_peer_limit) is refused, incoming and outgoing, for this
-  // long after the drop, so it cannot take the freed slot straight back.
+  // A peer whose connection closed as idle (DownloadInfo::peer_idle_timeout) is refused, incoming and outgoing, for
+  // this long after the drop, so it cannot take the freed slot straight back.
   static constexpr uint32_t idle_refuse_seconds = 30 * 60;
 
   // disconnect_available puts the peer's address, on its listen port, back on the list to dial (ConnectionList::erase
