@@ -235,12 +235,11 @@ void
 test_idle_peers::test_limit_from_download_state() {
   using torrent::DownloadMain;
 
-  CPPUNIT_ASSERT(DownloadMain::idle_peer_limit_for(true, false, 50, 50) == DownloadMain::idle_peer_timeout);
-  CPPUNIT_ASSERT(DownloadMain::idle_peer_limit_for(true, true, 120, 50) == DownloadMain::idle_peer_timeout_stalled);
+  CPPUNIT_ASSERT(DownloadMain::idle_peer_limit_for(false, 50, 50) == DownloadMain::idle_peer_timeout);
+  CPPUNIT_ASSERT(DownloadMain::idle_peer_limit_for(true, 120, 50) == DownloadMain::idle_peer_timeout_stalled);
 
-  // below min the download dials by itself; stopped, done or fetching metadata: nothing is closed
-  CPPUNIT_ASSERT(DownloadMain::idle_peer_limit_for(true, true, 49, 50) == 0s);
-  CPPUNIT_ASSERT(DownloadMain::idle_peer_limit_for(false, false, 120, 50) == 0s);
+  // below min the download dials by itself
+  CPPUNIT_ASSERT(DownloadMain::idle_peer_limit_for(true, 49, 50) == 0s);
 }
 
 void

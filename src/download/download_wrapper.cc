@@ -369,6 +369,7 @@ DownloadWrapper::finished_download() {
   this_thread::scheduler()->update_wait_for(&m_main->delay_download_done(), 0us);
 
   m_main->connection_list()->erase_seeders();
+  m_main->stop_stall_watch();
   info()->mutable_down_rate()->reset_rate();
 }
 

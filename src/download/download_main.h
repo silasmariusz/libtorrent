@@ -114,8 +114,10 @@ public:
   // Called every tick, before the keepalive pass: sets DownloadInfo::flag_stalled and DownloadInfo::peer_idle_timeout().
   void                update_idle_peers();
 
-  static std::chrono::seconds idle_peer_limit_for(bool downloading, bool stalled, uint32_t connections,
-                                                  uint32_t min_connections);
+  // Called by stop(), and when the download finishes.
+  void                stop_stall_watch();
+
+  static std::chrono::seconds idle_peer_limit_for(bool stalled, uint32_t connections, uint32_t min_connections);
 
   void                receive_chunk_done(unsigned int index);
   void                receive_corrupt_chunk(PeerInfo* peerInfo);
@@ -134,7 +136,7 @@ public:
   auto&               delay_disconnect_peers()    { return m_delay_disconnect_peers; }
 
 private:
-  // Only while the download is downloading.
+  // From start() of a download that is not done, until it finishes or stops.
   std::unique_ptr<StallWatch> m_stall_watch;
 
   DownloadInfo*       m_info;

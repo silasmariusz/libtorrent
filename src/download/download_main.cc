@@ -165,6 +165,9 @@ void DownloadMain::start(int flags) {
   info()->set_flags(DownloadInfo::flag_active);
   chunk_list()->set_flags(ChunkList::flag_active);
 
+  if (!info()->is_meta_download() && !file_list()->is_done())
+    m_stall_watch = std::make_unique<StallWatch>();
+
   m_delegator.set_aggressive(false);
   update_endgame();
 
@@ -186,9 +189,7 @@ DownloadMain::stop() {
   m_slot_stop_handshakes(this);
   connection_list()->erase_remaining(connection_list()->begin(), ConnectionList::disconnect_available);
 
-  info()->unset_flags(DownloadInfo::flag_stalled);
-  info()->set_peer_idle_timeout(std::chrono::seconds{});
-  m_stall_watch.reset();
+  stop_stall_watch();
 
   m_initial_seeding.reset();
 
@@ -326,23 +327,26 @@ DownloadMain::receive_connect_peers() {
 
 void
 DownloadMain::update_idle_peers() {
-  bool downloading = info()->is_active() && !info()->is_meta_download() && !file_list()->is_done();
+  if (m_stall_watch == nullptr)
+    return;
 
-  if (!downloading)
-    m_stall_watch.reset();
-  else if (!m_stall_watch)
-    m_stall_watch = std::make_unique<StallWatch>();
-
-  bool stalled = downloading && m_stall_watch->update(info()->down_rate()->total());
+  bool stalled = m_stall_watch->update(info()->down_rate()->total());
 
   info()->change_flags(DownloadInfo::flag_stalled, stalled);
-  info()->set_peer_idle_timeout(idle_peer_limit_for(downloading, stalled, connection_list()->size(), connection_list()->min_size()));
+  info()->set_peer_idle_timeout(idle_peer_limit_for(stalled, connection_list()->size(), connection_list()->min_size()));
+}
+
+void
+DownloadMain::stop_stall_watch() {
+  info()->unset_flags(DownloadInfo::flag_stalled);
+  info()->set_peer_idle_timeout(std::chrono::seconds{});
+  m_stall_watch.reset();
 }
 
 std::chrono::seconds
-DownloadMain::idle_peer_limit_for(bool downloading, bool stalled, uint32_t connections, uint32_t min_connections) {
+DownloadMain::idle_peer_limit_for(bool stalled, uint32_t connections, uint32_t min_connections) {
   // Below min the download dials by itself, and a small swarm keeps every peer.
-  if (!downloading || connections < min_connections)
+  if (connections < min_connections)
     return std::chrono::seconds{};
 
   return stalled ? idle_peer_timeout_stalled : idle_peer_timeout;
