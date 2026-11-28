@@ -197,28 +197,40 @@ inline void StateDown::mark_interested_and_schedule_if_changed() {
 }
 
 // Called on every keepalive pass, given the connection's piece bytes so far. The peer is idle while we want its data,
-// it does not unchoke us and no piece data goes either way. A peer that unchoked us while our own download slots keep
-// us from asking it, or that wants our pieces, is not charged: the wait is ours.
+// it does not unchoke us and no piece data goes either way.
 inline void StateDown::update_idle_time(const StateUp& up, uint64_t down_total, uint64_t up_total) {
-  auto now         = this_thread::cached_seconds();
-  auto elapsed     = now - m_idle_seen;
-  bool ours        = (is_unchoked() && !is_local_unchoked()) || up.is_interested();
-  bool was_waiting = m_idle_was_waiting;
+  auto now     = this_thread::cached_seconds();
+  auto elapsed = now - m_idle_seen;
+  bool waited  = m_idle_was_waiting;
 
-  m_idle_seen        = now;
-  m_idle_was_waiting = is_interested() && !ours;
+  m_idle_seen = now;
 
   if (!is_interested() || down_total != m_idle_down_total || up_total != m_idle_up_total || m_idle_was_unchoked) {
     m_idle_down_total   = down_total;
     m_idle_up_total     = up_total;
     m_idle_was_unchoked = false;
     m_idle_time         = std::chrono::seconds{};
-    return;
+    waited              = false;
   }
 
-  // Two minutes pass between looks, so only time that began with the peer keeping us waiting counts.
-  if (m_idle_was_waiting && was_waiting)
-    m_idle_time += elapsed;
+  if (!is_interested()) {
+    m_idle_was_waiting = false;
+
+  } else if (is_unchoked() && !is_local_unchoked()) {
+    // It unchoked us, and our own download slots keep us from asking it: the wait is ours.
+    m_idle_was_waiting = false;
+
+  } else if (up.is_interested()) {
+    // It wants our pieces: the wait is ours.
+    m_idle_was_waiting = false;
+
+  } else {
+    // Looks are two minutes apart, so only time that began with the peer keeping us waiting counts.
+    if (waited)
+      m_idle_time += elapsed;
+
+    m_idle_was_waiting = true;
+  }
 }
 
 inline void StateDown::withhold_interest_and_schedule() {
