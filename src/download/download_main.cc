@@ -187,8 +187,8 @@ DownloadMain::stop() {
   connection_list()->erase_remaining(connection_list()->begin(), ConnectionList::disconnect_available);
 
   info()->unset_flags(DownloadInfo::flag_stalled);
-  m_stall_watch.reset();
   info()->set_peer_idle_timeout(std::chrono::seconds{});
+  m_stall_watch.reset();
 
   m_initial_seeding.reset();
 
